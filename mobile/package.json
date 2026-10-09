@@ -1,0 +1,23 @@
+{
+  "name": "consulta-ciudadano-mobile",
+  "version": "1.0.0",
+  "description": "App móvil del sistema Consulta Ciudadano",
+  "main": "index.js",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo run:android",
+    "export:android": "expo export --platform android",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "expo": "^57.0.25",
+    "expo-camera": "~57.0.5",
+    "expo-local-authentication": "^57.0.3",
+    "expo-secure-store": "~57.0.4",
+    "expo-status-bar": "~57.0.1",
+    "react": "19.2.3",
+    "react-native": "0.86.3",
+    "react-native-safe-area-context": "~5.7.0"
+  },
+  "private": true
+}

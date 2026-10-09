@@ -1,0 +1,38 @@
+[
+  {
+    "identificacion": "900100001",
+    "nombres": "Laura",
+    "apellidos": "Rojas Demo",
+    "fuerza": "Policía",
+    "rango": "Patrullero",
+    "id_fuerza": "POL-DEMO-01",
+    "correo": "laura@demo.example"
+  },
+  {
+    "identificacion": "900100002",
+    "nombres": "Diego",
+    "apellidos": "Torres Demo",
+    "fuerza": "Ejército",
+    "rango": "Soldado",
+    "id_fuerza": "EJE-DEMO-02",
+    "correo": "diego@demo.example"
+  },
+  {
+    "identificacion": "900100003",
+    "nombres": "Sofía",
+    "apellidos": "Marín Demo",
+    "fuerza": "Armada",
+    "rango": "Marinero",
+    "id_fuerza": "ARM-DEMO-03",
+    "correo": "sofia@demo.example"
+  },
+  {
+    "identificacion": "900100004",
+    "nombres": "Andrés",
+    "apellidos": "Luna Demo",
+    "fuerza": "Fuerza Aérea",
+    "rango": "Técnico",
+    "id_fuerza": "FAC-DEMO-04",
+    "correo": "andres@demo.example"
+  }
+]

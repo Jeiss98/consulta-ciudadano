@@ -1,0 +1,36 @@
+{
+  "name": "consulta-ciudadano-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "db:init": "node scripts/init-db.js",
+    "db:seed": "node scripts/seed.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
+    "mock:defensa": "node src/defense-mock.js",
+    "demo:codes": "node scripts/barcodes.js"
+  },
+  "dependencies": {
+    "bcryptjs": "3.0.2",
+    "bwip-js": "4.7.0",
+    "dotenv": "17.2.3",
+    "express": "5.2.1",
+    "express-rate-limit": "8.2.1",
+    "helmet": "8.1.0",
+    "mysql2": "3.15.3",
+    "nodemailer": "7.0.10",
+    "pdfkit": "0.17.2",
+    "sequelize": "6.37.7",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "smtp-server": "3.16.1",
+    "supertest": "7.1.4"
+  }
+}

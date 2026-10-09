@@ -1,0 +1,27 @@
+✔ contraseñas generadas: exactamente 6 y tres clases (2854.568196ms)
+✔ login web usa cookie HttpOnly y no devuelve token ni hash (621.402227ms)
+✔ sin sesión se rechaza y se bloquean peticiones de escritura sin cabecera (14.714992ms)
+✔ registro valida Defensa y no crea datos que no coinciden (93.571069ms)
+✔ registro SMTP real, bcrypt, credenciales y duplicados (1294.295433ms)
+✔ fallo SMTP revierte registro y deja auditoría del fallo (674.163169ms)
+✔ fuerza pública no puede administrar ni generar reportes (47.033767ms)
+✔ consulta ambos estados y no encontrado; audita cada consulta (48.555529ms)
+✔ CRUD ciudadano, validación, duplicado y búsqueda (150.442138ms)
+✔ edición audita antes, después y actor; inactivos no se consultan (70.898644ms)
+✔ SQL directo queda auditado y no hereda actor del pool (5.768018ms)
+✔ PDF válido para tres filtros y error cuando no hay registros (548.996161ms)
+✔ administración crea usuario con varios perfiles y audita sin hashes (511.591359ms)
+✔ inactivar usuario invalida su token y no permite login (1111.919771ms)
+✔ no se puede inactivar el último administrador (17.46629ms)
+✔ 5 fallos bloquean incluso usando la contraseña correcta (2623.907677ms)
+✔ perfiles y permisos se aplican a tokens ya emitidos (35.205131ms)
+✔ renombrar una opción conserva sus permisos y se refleja en el menú (29.639788ms)
+✔ sesión vencida y cierre de sesión (15.328834ms)
+ℹ tests 19
+ℹ suites 0
+ℹ pass 19
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 12671.309103

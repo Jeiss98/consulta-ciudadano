@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Consulta Ciudadano",
+    "slug": "consulta-ciudadano",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "android": {
+      "package": "edu.konrad.consultaciudadano",
+      "permissions": [
+        "CAMERA"
+      ],
+      "allowBackup": false
+    },
+    "ios": {
+      "bundleIdentifier": "edu.konrad.consultaciudadano",
+      "supportsTablet": true
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Permite usar la cámara para leer el código de la cédula.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-secure-store",
+      "expo-status-bar"
+    ],
+    "extra": {
+      "projectDescription": "Demostración académica con datos ficticios"
+    }
+  }
+}
