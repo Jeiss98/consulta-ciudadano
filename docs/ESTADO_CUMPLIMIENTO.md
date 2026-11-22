@@ -13,7 +13,7 @@ Revisión del código y la evidencia entregada frente a `ProyectoII_SistemaConsu
 ## Parcial o pendiente de validación
 
 - **Defensa:** el proyecto consulta un servicio simulado con registros ficticios. No está conectado a una base de datos real del Departamento de Defensa. La demostración no confirma esta integración externa.
-- **Escaneo:** hay cámara y fixtures PDF417/Code 128 de demostración. Falta probarlos en un Android físico y validar un código de una cédula real.
+- **Escaneo:** el lector interpreta el PDF417 PubDSK de posiciones fijas de la cédula amarilla y pide confirmar el número antes de consultar. Incluye luz, zoom y fixtures sintéticos. Falta validar la captura en Android físico con una cédula real; no se afirma compatibilidad con todas las variantes. Ver `docs/ESCANEO.md`.
 - **Latencia móvil:** la app limita la petición a tres segundos, pero el tiempo extremo a extremo debe medirse con el teléfono y el servidor de destino.
 - **Despliegue:** el Compose y HTTPS están configurados; la evidencia suministrada no acredita haber levantado Docker Compose en el equipo de entrega.
 

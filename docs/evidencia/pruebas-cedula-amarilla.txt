@@ -1,0 +1,45 @@
+
+> consulta-ciudadano-mobile@1.0.0 test
+> node --test test/*.test.mjs
+
+✔ decodifica el PNG 100200001-no-requerido-pdf417 y extrae su identificación (37.7524ms)
+✔ decodifica el PNG 100200001-no-requerido-code128 y extrae su identificación (6.9977ms)
+✔ decodifica el PNG 100200001-no-requerido-amarilla-sintetica y extrae su identificación (27.7604ms)
+✔ decodifica el PNG 100200002-requerido-pdf417 y extrae su identificación (3.9159ms)
+✔ decodifica el PNG 100200002-requerido-code128 y extrae su identificación (6.4447ms)
+✔ decodifica el PNG 100200002-requerido-amarilla-sintetica y extrae su identificación (17.6845ms)
+✔ decodifica el PNG 999999999-no-encontrado-pdf417 y extrae su identificación (3.1948ms)
+✔ decodifica el PNG 999999999-no-encontrado-code128 y extrae su identificación (4.4419ms)
+✔ decodifica el PNG 999999999-no-encontrado-amarilla-sintetica y extrae su identificación (14.4571ms)
+✔ identificación de Code 128, PDF417 y JSON de demostración (1.3558ms)
+✔ cédula amarilla: conserva el número 12345 y quita solo su relleno (0.4477ms)
+✔ cédula amarilla: conserva el número 123456 y quita solo su relleno (0.1376ms)
+✔ cédula amarilla: conserva el número 1234567 y quita solo su relleno (0.0876ms)
+✔ cédula amarilla: conserva el número 98765432 y quita solo su relleno (0.0683ms)
+✔ cédula amarilla: conserva el número 100200001 y quita solo su relleno (0.0798ms)
+✔ cédula amarilla: conserva el número 1012345678 y quita solo su relleno (0.0746ms)
+✔ no confunde identificación con AFIS, ficha ni fecha de nacimiento (0.0875ms)
+✔ admite ficha corta con relleno NUL o espacios sin desplazar la identificación (0.6616ms)
+✔ permite nombres compuestos, tildes y segundos nombres o apellidos vacíos (0.2191ms)
+✔ permite relleno de espacios dentro de los campos de nombres (0.1188ms)
+✔ rechaza payloads truncados, desplazados o con separadores eliminados (0.7711ms)
+✔ rechaza campos dañados y fechas imposibles sin devolver otra identificación (0.3439ms)
+✔ no une dígitos separados por NUL ni convierte entradas que no son texto (0.2244ms)
+✔ Android usa raw aunque displayValue haya quitado los NUL o sea otro número (0.212ms)
+✔ usa data cuando el lector no entrega raw (0.1423ms)
+✔ no usa displayValue si raw existe pero está dañado (0.1173ms)
+✔ rechaza otros tipos de código y eventos vacíos (0.1501ms)
+✔ rechaza contenido ambiguo para evitar consultar a otra persona (0.1801ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 274.2891
+npm notice
+npm notice New major version of npm available! 11.19.0 -> 12.2.3
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.3
+npm notice To update run: npm install -g npm@12.2.3
+npm notice

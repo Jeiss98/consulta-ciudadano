@@ -38,6 +38,7 @@ import {
 } from "./integrations.js";
 import { HttpError, errorHandler } from "./errors.js";
 import { citizenPdf } from "./pdf.js";
+import { passwordRecovery } from "./password-recovery.js";
 export const app = express();
 app.disable("x-powered-by");
 // Un único proxy controlado (Caddy) en el despliegue Docker; localmente, ninguno.
@@ -143,6 +144,7 @@ app.post("/api/auth/registro", authLimit, async (req, res) => {
         "Registro completado. Revisa el correo para conocer tu contraseña.",
     });
 });
+app.use("/api/auth/recuperacion", passwordRecovery);
 app.use("/api", authenticate);
 app.get("/api/auth/me", (req, res) => res.json(req.user));
 app.get("/api/opciones", async (req, res) => {

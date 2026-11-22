@@ -88,14 +88,25 @@ export const Attempt = db.define("intentos_acceso", {
   fallos: D.INTEGER,
   bloqueado_hasta: D.DATE,
 });
+function auditJson(field) {
+  return {
+    type: D.JSON,
+    get() {
+      const value = this.getDataValue(field);
+      // MariaDB expone JSON como texto; MySQL lo entrega ya convertido.
+      return typeof value === "string" ? JSON.parse(value) : value;
+    },
+  };
+}
+
 export const Audit = db.define("auditoria", {
   id: { type: D.BIGINT.UNSIGNED, primaryKey: true, autoIncrement: true },
   actor: D.STRING(100),
   accion: D.STRING(40),
   tabla: D.STRING(60),
   registro_id: D.STRING(80),
-  antes: D.JSON,
-  despues: D.JSON,
+  antes: auditJson("antes"),
+  despues: auditJson("despues"),
   ip: D.STRING(64),
   solicitud_id: D.STRING(36),
   fecha: D.DATE,

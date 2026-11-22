@@ -17,7 +17,7 @@ import { StatusBar } from "expo-status-bar";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import * as SecureStore from "expo-secure-store";
 import { request } from "./src/api";
-import { extractIdentification } from "./src/barcode";
+import { identificationFromScan } from "./src/barcode";
 const credentialsKey = "cc.credentials";
 const initial = {
   identificacion: "",
@@ -85,9 +85,20 @@ function Main() {
     [catalog, setCatalog] = useState({}),
     [result, setResult] = useState(null),
     [manualId, setManualId] = useState(""),
+    [scannedId, setScannedId] = useState(""),
+    [recoveryEmail, setRecoveryEmail] = useState(""),
+    [currentPassword, setCurrentPassword] = useState(""),
+    [recoveryCode, setRecoveryCode] = useState(""),
+    [newPassword, setNewPassword] = useState(""),
+    [scanPaused, setScanPaused] = useState(false),
+    [torch, setTorch] = useState(false),
+    [zoom, setZoom] = useState(0),
     [permission, askPermission] = useCameraPermissions(),
     [foreground, setForeground] = useState(true);
   const scanning = useRef(false);
+  const changingPassword =
+    screen === "changePassword" || screen === "verifyChange";
+  const running = useRef(false);
   useEffect(() => {
     SecureStore.getItemAsync(credentialsKey)
       .then((value) => {
@@ -109,11 +120,13 @@ function Main() {
     return () => sub.remove();
   }, []);
   const changeScreen = (next) => {
+    if (next !== "scan") scanning.current = true;
     setError("");
     setScreen(next);
   };
   async function run(work) {
-    if (busy) return;
+    if (running.current) return;
+    running.current = true;
     setBusy(true);
     setError("");
     try {
@@ -125,6 +138,7 @@ function Main() {
         setScreen("login");
       }
     } finally {
+      running.current = false;
       setBusy(false);
     }
   }
@@ -180,7 +194,15 @@ function Main() {
   }
   async function startScan() {
     setError("");
-    const p = permission?.granted ? permission : await askPermission();
+    let p;
+    try {
+      p = permission?.granted ? permission : await askPermission();
+    } catch {
+      setError(
+        "No se pudo abrir la cámara. Intenta nuevamente o ingresa el número manualmente.",
+      );
+      return;
+    }
     if (!p.granted) {
       setError(
         "Autoriza el acceso a la cámara en los ajustes del dispositivo para escanear.",
@@ -188,10 +210,15 @@ function Main() {
       return;
     }
     scanning.current = false;
+    setScanPaused(false);
+    setScannedId("");
+    setTorch(false);
+    setZoom(0);
     setResult(null);
     changeScreen("scan");
   }
   function openManual() {
+    setScannedId("");
     setManualId("");
     setResult(null);
     changeScreen("manual");
@@ -212,25 +239,18 @@ function Main() {
       }
     });
   }
-  async function onBarcode({ data }) {
-    if (scanning.current) return;
+  function onBarcode(event) {
+    if (scanning.current || busy || !foreground || screen !== "scan") return;
     scanning.current = true;
-    await run(async () => {
-      const id = extractIdentification(data);
-      try {
-        const response = await request(`/consulta/${id}`, {
-          token: session.token,
-        });
-        setResult(response);
-        changeScreen("result");
-      } catch (error) {
-        if (error.status === 404) {
-          setResult({ identificacion: id, notFound: true });
-          changeScreen("result");
-        } else throw error;
-      }
-    });
-    // Queda pausado hasta que el usuario decida volver a leer: evita consultas duplicadas.
+    setScanPaused(true);
+    setTorch(false);
+    try {
+      setScannedId(identificationFromScan(event));
+      changeScreen("confirmScan");
+    } catch (error) {
+      setError(error.message);
+    }
+    // La lectura es local. Solo la confirmación del número inicia la consulta.
   }
   async function logout() {
     await run(async () => {
@@ -304,6 +324,17 @@ function Main() {
               </View>
               <Button title="Ingresar →" onPress={login} disabled={busy} />
               <Button
+                title="Olvidé mi contraseña"
+                disabled={busy}
+                secondary
+                onPress={() => {
+                  setRecoveryEmail("");
+                  setRecoveryCode("");
+                  setNewPassword("");
+                  changeScreen("recover");
+                }}
+              />
+              <Button
                 title="Registrarme como personal de fuerza pública"
                 onPress={openRegistration}
                 disabled={busy}
@@ -311,6 +342,161 @@ function Main() {
               />
             </View>
           </>
+        )}
+        {(screen === "recover" || screen === "reset" || changingPassword) && (
+          <View style={s.card}>
+            <Text style={s.cardTitle}>
+              {changingPassword ? "Cambiar contraseña" : "Recuperar contraseña"}
+            </Text>
+            {screen === "changePassword" ? (
+              <>
+                <Field
+                  label="Contraseña actual"
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                  secureTextEntry
+                  maxLength={64}
+                />
+                <Button
+                  title="Enviar código al correo"
+                  disabled={busy || !currentPassword}
+                  onPress={() =>
+                    run(async () => {
+                      await request("/auth/recuperacion/cambio/solicitar", {
+                        method: "POST",
+                        token: session.token,
+                        body: { actual: currentPassword },
+                      });
+                      setCurrentPassword("");
+                      changeScreen("verifyChange");
+                    })
+                  }
+                />
+              </>
+            ) : screen === "recover" ? (
+              <>
+                <Field
+                  label="Identificación"
+                  value={identificacion}
+                  onChangeText={setId}
+                  keyboardType="number-pad"
+                  maxLength={15}
+                />
+                <Field
+                  label="Correo registrado"
+                  value={recoveryEmail}
+                  onChangeText={setRecoveryEmail}
+                  keyboardType="email-address"
+                  maxLength={150}
+                />
+                <Button
+                  title="Solicitar código"
+                  disabled={busy}
+                  onPress={() =>
+                    run(async () => {
+                      await request("/auth/recuperacion/solicitar", {
+                        method: "POST",
+                        body: { identificacion, correo: recoveryEmail.trim() },
+                      });
+                      changeScreen("reset");
+                    })
+                  }
+                />
+              </>
+            ) : (
+              <>
+                <Text style={s.subtitle}>
+                  {changingPassword
+                    ? "Enviamos un código a tu correo registrado."
+                    : "Si los datos coinciden, recibirás un código por correo."}
+                  {" Escribe los seis dígitos. El código vence en 10 minutos."}
+                </Text>
+                <Field
+                  label="Código de verificación"
+                  value={recoveryCode}
+                  onChangeText={(value) =>
+                    setRecoveryCode(value.replace(/\D/g, "").slice(0, 6))
+                  }
+                  keyboardType="number-pad"
+                  autoCorrect={false}
+                />
+                <Field
+                  label="Nueva contraseña"
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                  secureTextEntry
+                  maxLength={64}
+                />
+                <Text style={s.hint}>
+                  Usa al menos 6 caracteres, una mayúscula, una minúscula y un
+                  número.
+                </Text>
+                <Button
+                  title="Cambiar contraseña"
+                  disabled={
+                    busy || recoveryCode.length !== 6 || newPassword.length < 6
+                  }
+                  onPress={() =>
+                    run(async () => {
+                      await request(
+                        changingPassword
+                          ? "/auth/recuperacion/cambio/confirmar"
+                          : "/auth/recuperacion/confirmar",
+                        {
+                          method: "POST",
+                          token: changingPassword ? session.token : undefined,
+                          body: {
+                            ...(changingPassword ? {} : { identificacion }),
+                            codigo: recoveryCode,
+                            password: newPassword,
+                          },
+                        },
+                      );
+                      await SecureStore.deleteItemAsync(credentialsKey).catch(
+                        () => {},
+                      );
+                      setPassword("");
+                      if (changingPassword) setId(session.user.identificacion);
+                      setSession(null);
+                      setRemember(false);
+                      setRecoveryCode("");
+                      setNewPassword("");
+                      changeScreen("login");
+                      Alert.alert(
+                        "Contraseña actualizada",
+                        "Ingresa con tu nueva contraseña.",
+                      );
+                    })
+                  }
+                />
+                <Button
+                  title="Solicitar otro código"
+                  disabled={busy}
+                  secondary
+                  onPress={() => {
+                    setRecoveryCode("");
+                    setNewPassword("");
+                    changeScreen(
+                      changingPassword ? "changePassword" : "recover",
+                    );
+                  }}
+                />
+              </>
+            )}
+            <Button
+              title={
+                changingPassword ? "Cancelar" : "Volver al inicio de sesión"
+              }
+              disabled={busy}
+              secondary
+              onPress={() => {
+                setRecoveryCode("");
+                setNewPassword("");
+                setCurrentPassword("");
+                changeScreen(changingPassword ? "home" : "login");
+              }}
+            />
+          </View>
         )}
         {screen === "register" && (
           <>
@@ -446,7 +632,7 @@ function Main() {
               <Text style={s.scanSymbol}>▥</Text>
               <Text style={s.cardTitle}>Consulta de antecedentes</Text>
               <Text style={s.centerText}>
-                Escanea el código de barras de la cédula o ingresa el número
+                Escanea el reverso de la cédula amarilla o ingresa el número
                 manualmente.
               </Text>
               <Button
@@ -470,6 +656,17 @@ function Main() {
               hora.
             </Text>
             <Button
+              title="Cambiar contraseña"
+              secondary
+              disabled={busy}
+              onPress={() => {
+                setCurrentPassword("");
+                setRecoveryCode("");
+                setNewPassword("");
+                changeScreen("changePassword");
+              }}
+            />
+            <Button
               title="Cerrar sesión"
               onPress={logout}
               disabled={busy}
@@ -480,30 +677,64 @@ function Main() {
         {screen === "scan" && (
           <>
             <Text style={s.eyebrow}>LECTOR DE CÉDULAS</Text>
-            <Text style={s.title}>Escanea el código</Text>
+            <Text style={s.title}>Cédula amarilla</Text>
             <Text style={s.subtitle}>
-              Acerca el reverso de la cédula y procura tener buena iluminación.
+              Coloca todo el código de barras del reverso dentro del marco.
+              Mantén la cédula quieta y ajusta la distancia hasta verla nítida.
             </Text>
             <View style={s.cameraBox}>
               {permission?.granted && foreground && (
                 <CameraView
                   style={StyleSheet.absoluteFill}
                   facing="back"
+                  enableTorch={torch && !scanPaused}
+                  zoom={zoom}
                   barcodeScannerSettings={{
                     barcodeTypes: ["pdf417", "code128"],
                   }}
-                  onBarcodeScanned={onBarcode}
+                  onBarcodeScanned={scanPaused ? undefined : onBarcode}
+                  onMountError={() => {
+                    scanning.current = true;
+                    setScanPaused(true);
+                    setTorch(false);
+                    setError(
+                      "No se pudo iniciar la cámara. Regresa e inténtalo nuevamente o ingresa el número manualmente.",
+                    );
+                  }}
                 />
               )}
               <View pointerEvents="none" style={s.scanFrame} />
             </View>
             <Text style={s.hint}>
-              {busy ? "Consultando el registro…" : "PDF417 · Code 128"}
+              {scanPaused
+                ? "Lectura pausada. Pulsa Volver a leer para reintentar."
+                : "Evita reflejos sobre el código. Si usas la luz, inclina ligeramente la cédula."}
             </Text>
+            <Button
+              title={torch ? "Apagar luz" : "Encender luz"}
+              onPress={() => setTorch(!torch)}
+              disabled={scanPaused}
+              secondary
+            />
+            <View style={s.chips}>
+              <Button
+                title="Alejar"
+                onPress={() => setZoom((value) => Math.max(0, value - 0.05))}
+                disabled={scanPaused || zoom <= 0}
+                secondary
+              />
+              <Button
+                title="Acercar"
+                onPress={() => setZoom((value) => Math.min(0.3, value + 0.05))}
+                disabled={scanPaused || zoom >= 0.3}
+                secondary
+              />
+            </View>
             <Button
               title="Volver a leer"
               onPress={() => {
                 scanning.current = false;
+                setScanPaused(false);
                 setError("");
               }}
               disabled={busy}
@@ -521,6 +752,48 @@ function Main() {
               disabled={busy}
               secondary
             />
+          </>
+        )}
+        {screen === "confirmScan" && (
+          <>
+            <Text style={s.eyebrow}>CÉDULA LEÍDA CORRECTAMENTE</Text>
+            <Text style={s.title}>Confirma el número</Text>
+            <Text style={s.subtitle}>
+              Compara este número con el impreso en el frente de la cédula antes
+              de consultar.
+            </Text>
+            <View style={s.card}>
+              <Text style={s.label}>Número de cédula leído</Text>
+              <Text selectable style={s.cardTitle}>
+                {scannedId}
+              </Text>
+              <Button
+                title="Confirmar y consultar"
+                onPress={() => consultById(scannedId)}
+                disabled={busy || !scannedId}
+              />
+              <Button
+                title="Volver a escanear"
+                onPress={startScan}
+                disabled={busy}
+                secondary
+              />
+              <Button
+                title="Ingresar número manualmente"
+                onPress={openManual}
+                disabled={busy}
+                secondary
+              />
+              <Button
+                title="Cancelar"
+                onPress={() => {
+                  setScannedId("");
+                  changeScreen("home");
+                }}
+                disabled={busy}
+                secondary
+              />
+            </View>
           </>
         )}
         {screen === "manual" && (
@@ -544,9 +817,7 @@ function Main() {
                 title="Consultar"
                 onPress={() => {
                   if (!/^\d{5,15}$/.test(manualId)) {
-                    setError(
-                      "Ingresa entre 5 y 15 dígitos para continuar.",
-                    );
+                    setError("Ingresa entre 5 y 15 dígitos para continuar.");
                     return;
                   }
                   consultById(manualId);
@@ -591,7 +862,7 @@ function Main() {
                   },
                 ]}
               >
-                {result.notFound ? "Ciudadano no encontrado" : result.estado}
+                {result.notFound ? "Sin registro en la base" : result.estado}
               </Text>
               <Text style={s.resultId}>CC {result.identificacion}</Text>
               <Text style={s.centerText}>

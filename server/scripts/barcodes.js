@@ -1,5 +1,6 @@
 import bwipjs from "bwip-js";
 import { mkdir, writeFile } from "node:fs/promises";
+import { yellowCardFixture } from "../../fixtures/cedulas/amarilla-sintetica.mjs";
 const dir = new URL("../../fixtures/cedulas/", import.meta.url);
 await mkdir(dir, { recursive: true });
 for (const [id, label] of [
@@ -20,5 +21,19 @@ for (const [id, label] of [
     });
     await writeFile(new URL(`${id}-${label}-${type}.png`, dir), buffer);
   }
+  const yellowCard = await bwipjs.toBuffer({
+    bcid: "pdf417",
+    text: yellowCardFixture(id),
+    binarytext: true,
+    columns: 14,
+    eclevel: 5,
+    scale: 3,
+    padding: 16,
+    backgroundcolor: "FFFFFF",
+  });
+  await writeFile(
+    new URL(`${id}-${label}-amarilla-sintetica.png`, dir),
+    yellowCard,
+  );
 }
 console.log("Códigos ficticios generados en fixtures/cedulas.");

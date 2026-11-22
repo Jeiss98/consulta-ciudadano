@@ -461,3 +461,68 @@ test("sesión vencida y cierre de sesión", async () => {
   assert.equal((await write(agent.post("/api/auth/logout"))).status, 200);
   assert.equal((await agent.get("/api/auth/me")).status, 401);
 });
+
+test("recuperación por correo cambia la contraseña y rechaza reutilizar el código", async () => {
+  const fixture = JSON.parse(
+    await readFile("../fixtures/defensa.json", "utf8"),
+  )[3];
+  await write(client.post("/api/auth/registro")).send(fixture).expect(201);
+  const requestCode = (correo) =>
+    write(client.post("/api/auth/recuperacion/solicitar"))
+      .send({ identificacion: fixture.identificacion, correo })
+      .expect(200);
+  const initialMail = mail.length;
+  const mismatch = await requestCode("otro@demo.example");
+  assert.equal(mail.length, initialMail);
+  const accepted = await requestCode(fixture.correo);
+  assert.deepEqual(accepted.body, mismatch.body);
+  assert.equal(mail.length, initialMail + 1);
+  const codigo = mail
+    .at(-1)
+    .match(/^\d{6}\r?$/m)[0]
+    .trim();
+  const confirm = (code) =>
+    write(client.post("/api/auth/recuperacion/confirmar")).send({
+      identificacion: fixture.identificacion,
+      codigo: code,
+      password: "NuevaClave2026",
+    });
+  const lastDigit = codigo.endsWith("0") ? "1" : "0";
+  await confirm(codigo.slice(0, -1) + lastDigit).expect(400);
+  await confirm(codigo).expect(200);
+  await confirm(codigo).expect(400);
+  const login = await write(client.post("/api/auth/login"))
+    .send({
+      identificacion: fixture.identificacion,
+      password: "NuevaClave2026",
+      canal: "movil",
+    })
+    .expect(200);
+  const change = (path) =>
+    write(client.post("/api/auth/recuperacion/cambio/" + path)).set(
+      "Authorization",
+      "Bearer " + login.body.token,
+    );
+  await write(client.post("/api/auth/recuperacion/cambio/solicitar"))
+    .send({ actual: "NuevaClave2026" })
+    .expect(401);
+  await change("solicitar").send({ actual: "Incorrecta1" }).expect(400);
+  await change("solicitar").send({ actual: "NuevaClave2026" }).expect(200);
+  const changeCode = mail
+    .at(-1)
+    .match(/^\d{6}\r?$/m)[0]
+    .trim();
+  await change("confirmar")
+    .send({ codigo: changeCode, password: "ClaveCambiada2026" })
+    .expect(200);
+  await change("confirmar")
+    .send({ codigo: changeCode, password: "OtraClave2026" })
+    .expect(401);
+  await write(client.post("/api/auth/login"))
+    .send({
+      identificacion: fixture.identificacion,
+      password: "ClaveCambiada2026",
+      canal: "movil",
+    })
+    .expect(200);
+});

@@ -1,5 +1,24 @@
 # Verificación de la entrega
 
+## Revisión de la versión con Expo SDK 58
+
+- 28 pruebas móviles aprobadas. Android generó el bundle de 614 módulos.
+- 20 pruebas del servidor aprobadas con MariaDB 11.4.5 en una base desechable y un servidor SMTP local. Se verificaron recuperación y cambio autenticado con códigos de seis dígitos, rechazo de códigos alterados o usados y cierre de la sesión anterior.
+- Validada la configuración combinada de Docker Compose. La prueba de integración de esta revisión usó MariaDB en lugar del contenedor MySQL 8.4. Queda la comprobación en el teléfono con la versión final.
+
+
+## Actualización del lector: 21 de noviembre de 2026 (Bogotá)
+
+- `cd mobile; npm test`: 28 pruebas aprobadas, incluyendo decodificación de los nueve PNG de prueba mediante ZXing WASM local y extracción de su identificación.
+- Casos del parser: distribución PubDSK, ceros de relleno, ficha corta, nombres compuestos, campos opcionales vacíos, datos corruptos, fechas imposibles, preferencia de `raw` y compatibilidad con los códigos ficticios anteriores.
+- `cd mobile; npm run export:android`: bundle JavaScript Android generado con Expo SDK 57 (600 módulos). Esto no equivale a un APK ni a una prueba de cámara en dispositivo.
+- `cd server; npm run demo:codes`: generación de los tres PDF417 sintéticos con la distribución PubDSK, además de los seis PNG anteriores.
+- Pendiente: captura de cédula física y flujo de confirmación/consulta en un Android real. No se repitieron las pruebas de MySQL, servidor o despliegue en esta actualización.
+
+Guía y límites: [ESCANEO.md](ESCANEO.md). Evidencia de esta ejecución: `evidencia/pruebas-cedula-amarilla.txt` y `evidencia/bundle-cedula-amarilla.txt`.
+
+## Evidencia histórica de la entrega original
+
 Fecha de ejecución: 27 de septiembre de 2026, hora de Bogotá.
 
 | Comprobación                                    | Resultado                                                                                         |
