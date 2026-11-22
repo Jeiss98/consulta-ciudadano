@@ -5,7 +5,7 @@ administración web, aplicación móvil Android, API REST, MySQL y
 auditoría de cambios.
 
 **Stack:** Node.js 22, Express 5, Sequelize, MySQL 8.4 y React Native
-con Expo SDK 57.
+con Expo SDK 58.
 
 > El proyecto usa Node.js en lugar del stack Java del enunciado,
 > siguiendo la decisión del equipo. Los datos y servicios de Defensa
@@ -47,7 +47,7 @@ Descarga: https://www.docker.com/products/docker-desktop
 
 -   Android con Expo Go compatible con la versión de Expo usada por el
     proyecto.
--   Node.js y npm instalados.
+-   Node.js 22.13+ (rama 22) o Node.js 24.3+ (rama 24), con npm.
 -   PC y teléfono conectados a la misma red Wi-Fi para la conexión local
     de Expo.
 -   Para acceder a la API desde fuera de la red local, una URL accesible
@@ -440,20 +440,45 @@ El servicio simulado valida los datos y envía una contraseña al correo
 de prueba. Con Docker, abre http://localhost:8025 en el PC para
 consultar el mensaje. En el teléfono, `localhost` no apunta al PC.
 
+### Ejecutar desde Visual Studio Code y probar en Android
+
+1. Abre Docker Desktop. En VS Code abre la carpeta que contiene compose.yaml.
+2. En la paleta de comandos (Ctrl+Shift+P), elige **Tareas: Ejecutar tarea → Consulta Ciudadano: iniciar API**. Esta tarea reconstruye la API y aplica compose.mobile.yaml para publicar el puerto 3000.
+3. Desde el Android, conectado a la misma red Wi-Fi, abre http://IP-DEL-PC:3000/api/salud. Debe devolver un JSON con el estado disponible. Usa ipconfig en el PC para obtener su IPv4.
+4. En mobile, instala dependencias con npm ci. Copia mobile/.env.example a mobile/.env y configura EXPO_PUBLIC_API_URL con la IP del PC, por ejemplo http://192.168.1.22:3000/api. Reinicia Expo si cambias el archivo.
+5. Ejecuta **Consulta Ciudadano: iniciar Expo** desde la paleta de tareas y abre el QR en Expo Go para SDK 58. La tarea inicia Expo en el puerto 8082.
+
+La publicación HTTP del puerto 3000 es para la demostración en una red local de confianza. Para una instalación real, usa HTTPS con un certificado reconocido por el teléfono.
+
+### Recuperar o cambiar la contraseña
+
+- **Olvidé mi contraseña** aparece en el inicio de sesión. Escribe la identificación y el correo registrado. Si coinciden, recibirás un código. En esta instalación de prueba, consulta el mensaje más reciente en Mailpit (http://localhost:8025).
+- **Cambiar contraseña** aparece al iniciar sesión. Escribe tu contraseña actual para enviar un código al correo registrado. En ambos flujos, introduce los seis dígitos y la nueva contraseña. La aplicación te pedirá iniciar sesión de nuevo y el servidor cerrará las sesiones anteriores.
+- Los códigos vencen en 10 minutos y admiten cinco intentos. Espera un minuto antes de solicitar otro. Cada código está asociado a su cuenta y a su operación. Reiniciar la API invalida los códigos pendientes porque se almacenan en memoria.
+
 ### Inicio de sesión y consultas
 
 -   Inicia sesión con la identificación y la contraseña generada por el
     registro.
--   Para consultar, escanea el código de barras del reverso de una
-    cédula de prueba o introduce manualmente el número.
--   Si usas el lector, concede el permiso de cámara.
--   Los PNG de prueba están en `fixtures/cedulas/`.
+-   Para consultar, escanea el PDF417 del reverso de la **cédula amarilla**
+    o introduce manualmente el número.
+-   Concede el permiso de cámara, enfoca todo el código y evita reflejos.
+    Puedes encender la luz y ajustar el acercamiento desde el lector.
+-   Compara el número leído con el impreso en la cédula y pulsa
+    **Confirmar y consultar**. La lectura por sí sola no envía la consulta.
+-   Los PNG de prueba están en `fixtures/cedulas/`. Los archivos
+    `*-amarilla-sintetica.png` ejercitan la estructura PubDSK con datos ficticios.
+
+El parser admite la distribución PubDSK de posiciones fijas. La captura con
+una cédula física todavía requiere validación en Android; no se garantiza
+compatibilidad con todas las variantes. Consulta la [guía de escaneo](docs/ESCANEO.md)
+para conocer el alcance y realizar las pruebas en el teléfono.
 
   Identificación de prueba   Resultado esperado
   -------------------------- -------------------------
   `100200001`                No requerido
   `100200002`                Requerido
-  `999999999`                Ciudadano no encontrado
+  `999999999`                Sin registro en la base
 
 Cada consulta debe quedar registrada de acuerdo con las funciones de
 auditoría implementadas. Estos identificadores son ficticios y no deben

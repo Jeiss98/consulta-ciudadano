@@ -1,0 +1,44 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Consulta Ciudadano: iniciar API",
+      "type": "process",
+      "command": "docker",
+      "args": [
+        "compose",
+        "-f",
+        "compose.yaml",
+        "-f",
+        "compose.mobile.yaml",
+        "up",
+        "--build",
+        "-d",
+        "--wait"
+      ],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Consulta Ciudadano: iniciar Expo",
+      "type": "shell",
+      "command": "npm.cmd start -- --port 8082",
+      "options": {
+        "cwd": "${workspaceFolder}/mobile"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Consulta Ciudadano: ejecutar pruebas móviles",
+      "type": "shell",
+      "command": "npm.cmd test",
+      "options": {
+        "cwd": "${workspaceFolder}/mobile"
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

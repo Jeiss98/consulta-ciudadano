@@ -41,6 +41,22 @@ export async function validateDefense(data) {
   }
 }
 export async function sendCredentials(data, password) {
+  return sendMail(
+    data.correo,
+    "Registro confirmado · Consulta Ciudadano",
+    `Hola ${data.nombres},
+
+Tu registro fue validado.
+Identificación: ${data.identificacion}
+Contraseña: ${password}
+
+Ingresa desde Consulta Ciudadano.
+Demostración académica con datos ficticios.`,
+    "No se pudo enviar el correo. El registro no se completó; puedes intentarlo otra vez.",
+  );
+}
+
+export async function sendMail(to, subject, text, errorMessage) {
   const transport = nodemailer.createTransport({
     host: process.env.SMTP_HOST || "127.0.0.1",
     port: Number(process.env.SMTP_PORT || 1025),
@@ -55,22 +71,12 @@ export async function sendCredentials(data, password) {
   try {
     await transport.sendMail({
       from: process.env.MAIL_FROM || "registro@consulta.example",
-      to: data.correo,
-      subject: "Registro confirmado · Consulta Ciudadano",
-      text: `Hola ${data.nombres},
-
-Tu registro fue validado.
-Identificación: ${data.identificacion}
-Contraseña: ${password}
-
-Ingresa desde Consulta Ciudadano.
-Demostración académica con datos ficticios.`,
+      to,
+      subject,
+      text,
     });
   } catch {
-    throw new HttpError(
-      503,
-      "No se pudo enviar el correo. El registro no se completó; puedes intentarlo otra vez.",
-    );
+    throw new HttpError(503, errorMessage);
   } finally {
     transport.close();
   }
